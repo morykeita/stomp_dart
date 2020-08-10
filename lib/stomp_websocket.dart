@@ -36,7 +36,7 @@ class StompWebSocket {
       channel = IOWebSocketChannel.connect(config.url);
       channel.stream.listen(_onData,
           onError: _onError, onDone: _onDone, cancelOnError: null);
-      _connectToStomp();
+      _connectToStomp(config);
     } on WebSocketChannelException catch (err) {
       _onError(err);
     } catch (err) {
@@ -44,8 +44,8 @@ class StompWebSocket {
     }
   }
 
-  void _connectToStomp() {
-    var connectHeaders = {};
+  void _connectToStomp(Config config) {
+    var connectHeaders = config.stompConnectHeaders ?? {};
     connectHeaders['accept-version'] = ['1.0', '1.1', '1.2'].join(',');
     _transmit(command: 'CONNECT', headers: connectHeaders);
   }
