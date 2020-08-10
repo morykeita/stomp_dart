@@ -55,7 +55,8 @@ class StompWebSocket {
       Map<String, String> headers,
       String body,
       Uint8List binaryBody}) {
-    final frame = Frame(command: command, headers: headers, body: body);
+    final frame = Frame(
+        command: command, headers: headers, body: body, binaryBody: binaryBody);
 
     dynamic serializedFrame = _parser.serializeFrame(frame);
 
