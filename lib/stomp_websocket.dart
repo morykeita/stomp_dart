@@ -17,6 +17,7 @@ class StompWebSocket {
   WebSocketChannel channel;
   Parser _parser;
 
+  int _counter = 0;
   bool _connected = false;
 
   Completer<Frame> completer;
@@ -115,5 +116,38 @@ class StompWebSocket {
         // unhandled frame
         break;
     }
+  }
+
+  void send(String destination,
+      {Map headers, String body, String transactionId}) {
+    headers = headers == null ? {} : headers;
+    headers["destination"] = destination;
+
+    if (transactionId != null) {
+      headers["transaction"] = transactionId;
+    }
+    this._transmit(command: 'SEND', headers: headers, body: body);
+  }
+
+  Stream<Frame> subscribe(String destination, [Map headers]) {
+    if (headers == null) {
+      headers = {};
+    }
+    // for convenience if the `id` header is not set, we create a new one for this client
+    //that will be returned to be able to unsubscribe this subscription
+    if (!headers.containsKey("id")) {
+      headers["id"] = "sub-${this._counter}";
+      this._counter++;
+    }
+
+    String id = headers["id"];
+    StreamController controller = new StreamController(onCancel: () {
+      this._subscriptions.remove(id);
+      this._transmit(command: 'UNSUBSCRIBE', headers: {id: id});
+    });
+    headers["destination"] = destination;
+    this._subscriptions[id] = controller;
+    this._transmit(command: 'SUBSCRIBE', headers: headers);
+    return controller.stream;
   }
 }
