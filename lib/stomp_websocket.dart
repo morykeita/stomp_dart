@@ -55,8 +55,6 @@ class StompWebSocket {
       Map<String, String> headers,
       String body,
       Uint8List binaryBody}) {
-    body = body == null ? "test body" : body;
-
     ///binaryBody = binaryBody == null ? Uint8List.fromList() : body;
     final frame = Frame(
         command: command, headers: headers, body: body, binaryBody: binaryBody);

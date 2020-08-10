@@ -17,17 +17,17 @@ class Frame {
    * Creates a new instance of Frame. All arguments must be non-null.
    */
   Frame({this.command, this.headers, this.body, this.binaryBody}) {
-    if (this.headers == null) {
-      throw new ArgumentError("command must not be null");
-    }
-
-    if (this.headers == null) {
-      throw new ArgumentError("headers must not be null");
-    }
-
-    if (this.body == null) {
-      throw new ArgumentError("body must not be null");
-    }
+//    if (this.headers == null) {
+//      throw new ArgumentError("command must not be null");
+//    }
+//
+//    if (this.headers == null) {
+//      throw new ArgumentError("headers must not be null");
+//    }
+//
+//    if (this.body == null) {
+//      throw new ArgumentError("body must not be null");
+//    }
   }
 
   /**
