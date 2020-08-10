@@ -12,9 +12,6 @@ class Parser {
   String _currentHeaderKey;
   int _bodyBytesRemaining;
 
-//  final Function(Frame) onStompFrame;
-//  final Function onPingFrame;
-
   final NULL = 0;
   final LF = 10;
   final CR = 13;
@@ -24,143 +21,21 @@ class Parser {
 
   bool escapeHeaders = false;
 
-//  StompParser(this.onStompFrame, [this.onPingFrame]) {
-//    _initState();
-//  }
-
-  void parseData(dynamic data) {
-    Uint8List byteList;
-    if (data is String) {
-      byteList = Uint8List.fromList(utf8.encode(data));
-    } else if (data is List<int>) {
-      byteList = Uint8List.fromList(data);
-    } else {
-      throw UnsupportedError('Input data type unsupported');
-    }
-
-    for (var i = 0; i < byteList.length; i++) {
-      _parseByte(byteList[i]);
-    }
-  }
-
-//  void _collectFrame(int byte) {
-//    if (byte == NULL) {
-//      // Ignore
-//      return;
-//    }
-//    if (byte == CR) {
-//      // Ignore CR
-//      return;
-//    }
-//    if (byte == LF) {
-//      // Incoming Ping
-//      onPingFrame != null ? onPingFrame() : null;
-//      return;
-//    }
-//
-//    _parseByte = _collectCommand;
-//    _reinjectByte(byte);
-//  }
-//
-//  void _collectCommand(int byte) {
-//    if (byte == CR) {
-//      // Ignore CR
-//      return;
-//    }
-//    if (byte == LF) {
-//      _resultCommand = _consumeTokenAsString();
-//      _parseByte = _collectHeaders;
-//      return;
-//    }
-//
-//    _consumeByte(byte);
-//  }
-
-//  void _collectHeaders(int byte) {
-//    if (byte == CR) {
-//      // Ignore CR
-//      return;
-//    }
-//    if (byte == LF) {
-//      _setupCollectBody();
-//      return;
-//    }
-//
-//    _parseByte = _collectHeaderKey;
-//    _reinjectByte(byte);
-//  }
-
-//  void _collectHeaderKey(int byte) {
-//    if (byte == COLON) {
-//      _currentHeaderKey = _consumeTokenAsString();
-//      _parseByte = _collectHeaderValue;
-//      return;
-//    }
-//
-//    _consumeByte(byte);
-//  }
-
-//  void _collectHeaderValue(int byte) {
-//    if (byte == CR) {
-//      // Ignore CR
-//      return;
-//    }
-//    if (byte == LF) {
-//      _resultHeaders[_currentHeaderKey] = _consumeTokenAsString();
-//      _currentHeaderKey = null;
-//      _parseByte = _collectHeaders;
-//      return;
-//    }
-//
-//    _consumeByte(byte);
-//  }
-
-//  void _collectFixedSizeBody(int byte) {
-//    if (_bodyBytesRemaining-- == 0) {
-//      _consumeBody();
-//      return;
-//    }
-//
-//    _consumeByte(byte);
-//  }
-//
-//  void _collectTerminatedBody(int byte) {
-//    if (byte == NULL) {
-//      _consumeBody();
-//      return;
-//    }
-//
-//    _consumeByte(byte);
-//  }
-
-//  void _setupCollectBody() {
-//    if (_resultHeaders.containsKey('content-length')) {
-//      _bodyBytesRemaining = int.tryParse(_resultHeaders['content-length']);
-//      if (_bodyBytesRemaining == null) {
-//        print(
-//            '[STOMP] Unable to parse content-length although it was present. Using fallback');
-//        _parseByte = _collectTerminatedBody;
-//      } else {
-//        _parseByte = _collectFixedSizeBody;
-//      }
+//  String deserializeFrame(dynamic data) {
+//    Frame deserializedFrame;
+//    Uint8List byteList;
+//    if (data is String) {
+//      byteList = Uint8List.fromList(utf8.encode(data));
+//    } else if (data is List<int>) {
+//      byteList = Uint8List.fromList(data);
 //    } else {
-//      _parseByte = _collectTerminatedBody;
-//    }
-//  }
-
-//  void _consumeBody() {
-//    _resultBody = _consumeTokenAsString();
-//
-//    if (escapeHeaders) {
-//      _unescapeResultHeaders();
+//      throw UnsupportedError('Input data type unsupported');
 //    }
 //
-//    try {
-//      onStompFrame(Frame(
-//          command: _resultCommand, headers: _resultHeaders, body: _resultBody));
-//    } finally {
-//      _initState();
+//    for (var i = 0; i < byteList.length; i++) {
+//      _parseByte(byteList[i]);
 //    }
+//    //return des
 //  }
 
   String _consumeTokenAsString() {
@@ -270,7 +145,55 @@ class Parser {
 
     _currentToken = [];
     _currentHeaderKey = null;
+  }
 
-    // _parseByte = _collectFrame;
+  /**
+   * Unmarshals a String of data containing one STOMP frame.
+   */
+  Frame deserializeFrame(String data) {
+    /**
+     * search for 2 consecutives LF byte to split the command
+     * and headers from the body
+     **/
+    int divider = data.indexOf("\n\n");
+    if (divider < 0) {
+      throw new ArgumentError("The data is not a valid Frame.");
+    }
+    List<String> headerLines = data.substring(0, divider).split("\n");
+    String command = headerLines.removeAt(0);
+    Map headers = {};
+
+    /**
+     * Parse headers in reverse order so that for repeated headers, the 1st
+     * value is used
+     **/
+    for (String line in headerLines.reversed) {
+      int idx = line.indexOf(":");
+      headers[line.substring(0, idx).trim()] = line.substring(idx + 1).trim();
+    }
+
+    /**
+     * Parse body
+     * check for content-length or stop at the first NULL byte found.
+     **/
+    String body = "";
+    // skip the 2 LF bytes that divides the headers from the body
+    int start = divider + 2;
+    if (headers.containsKey("content-length")) {
+      int len = int.parse(headers["content-length"]);
+      List<int> dataArray = utf8.encoder.convert(data.substring(start));
+      body = utf8.decoder.convert(dataArray.sublist(0, len));
+    } else {
+      int chr = null;
+      for (int i = start; i < data.length; i++) {
+        chr = data.codeUnitAt(i);
+        if (chr == 0) {
+          break;
+        }
+        body += new String.fromCharCode(chr);
+      }
+    }
+    return new Frame(command: command, headers: headers, body: body);
+    //return new Frame(command, headers, body);
   }
 }

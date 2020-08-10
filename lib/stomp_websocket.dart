@@ -73,7 +73,8 @@ class StompWebSocket {
   }
 
   void _onData(dynamic event) {
-    String data = event.data;
+    // deserialize frame
+    Frame data = _parser.deserializeFrame(event);
 
     if (data == '\n') {
       // heartbeat
