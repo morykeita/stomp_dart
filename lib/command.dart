@@ -1,0 +1,1 @@
+enum Command { CONNECTED, MESSAGE, RECEIPT, ERROR }
