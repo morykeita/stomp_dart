@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:stompdart/config.dart';
-import 'package:stompdart/event.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -41,7 +40,7 @@ class StompWebSocket {
     print('an error happened');
   }
 
-  void _onData(DataEvent event) {
+  void _onData(dynamic event) {
     String data = event.data;
 
     if (data == '\n') {
