@@ -74,49 +74,46 @@ class StompWebSocket {
 
   void _onData(dynamic event) {
     // deserialize frame
-    Frame data = _parser.deserializeFrame(event);
+    Frame frame = _parser.deserializeFrame(event);
 
-    if (data == '\n') {
-      // heartbeat
-      return;
-    }
-
-//    for (Frame frame in Frame.unmarshall(data)) {
-//      switch (frame.command) {
-//        case 'CONNECTED':
-//          this._connected = true;
-//          //_set up hearbeats
-//          completer.complete(frame);
-//          break;
-//        case 'MESSAGE':
-//          String subscription = frame.headers['subscription'];
-//          StreamController<Frame> controller =
-//              this._subscriptions[subscription];
-//          if (controller != null && controller.hasListener) {
-//            controller.add(frame);
-//          } else {
-//            // unhandled frame
-//          }
-//          break;
-//        case 'RECEIPT':
-//          if (_receiptController.hasListener) {
-//            this._receiptController.add(frame);
-//          }
-//          break;
-//        case 'ERROR':
-//          if (!completer.isCompleted) {
-//            completer.completeError(frame);
-//          } else {
-//            if (frame.headers.containsKey('receipt-id') &&
-//                this._receiptController.hasListener) {
-//              this._receiptController.add(frame);
-//            }
-//          }
-//          break;
-//        default:
-//          // unhandled frame
-//          break;
-//      }
+//    if (data == '\n') {
+//      // heartbeat
+//      return;
 //    }
+
+    switch (frame.command) {
+      case 'CONNECTED':
+        this._connected = true;
+        //_set up hearbeats
+        completer.complete(frame);
+        break;
+      case 'MESSAGE':
+        String subscription = frame.headers['subscription'];
+        StreamController<Frame> controller = this._subscriptions[subscription];
+        if (controller != null && controller.hasListener) {
+          controller.add(frame);
+        } else {
+          // unhandled frame
+        }
+        break;
+      case 'RECEIPT':
+        if (_receiptController.hasListener) {
+          this._receiptController.add(frame);
+        }
+        break;
+      case 'ERROR':
+        if (!completer.isCompleted) {
+          completer.completeError(frame);
+        } else {
+          if (frame.headers.containsKey('receipt-id') &&
+              this._receiptController.hasListener) {
+            this._receiptController.add(frame);
+          }
+        }
+        break;
+      default:
+        // unhandled frame
+        break;
+    }
   }
 }
