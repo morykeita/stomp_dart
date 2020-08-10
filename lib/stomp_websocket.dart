@@ -28,12 +28,16 @@ class StompWebSocket {
     try {
       channel = IOWebSocketChannel.connect(config.url);
       channel.stream.listen(_onData,
-          onError: _onError, onDone: null, cancelOnError: null);
+          onError: _onError, onDone: _onDone, cancelOnError: null);
     } on WebSocketChannelException catch (err) {
       _onError(err);
     } catch (err) {
       print(err);
     }
+  }
+
+  void _onDone() {
+    print('done');
   }
 
   void _onError(dynamic event) {
