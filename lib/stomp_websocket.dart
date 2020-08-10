@@ -27,10 +27,18 @@ class StompWebSocket {
   Future<Frame> connect(Config config) {
     completer = new Completer();
     try {
-      channel = IOWebSocketChannel.connect(config.url, headers: config.headers);
-      channel.stream
-          .listen(_onData, onError: null, onDone: null, cancelOnError: null);
-    } catch (err) {}
+      channel = IOWebSocketChannel.connect(config.url);
+      channel.stream.listen(_onData,
+          onError: _onError, onDone: null, cancelOnError: null);
+    } on WebSocketChannelException catch (err) {
+      _onError(err);
+    } catch (err) {
+      print(err);
+    }
+  }
+
+  void _onError(dynamic event) {
+    print('an error happened');
   }
 
   void _onData(DataEvent event) {
