@@ -141,9 +141,10 @@ class StompWebSocket {
     }
 
     String id = headers["id"];
+    Map<String, String> subHeaders = {'id': id};
     StreamController<Frame> controller = new StreamController(onCancel: () {
       this._subscriptions.remove(id);
-      this._transmit(command: 'UNSUBSCRIBE', headers: {id: id});
+      this._transmit(command: 'UNSUBSCRIBE', headers: subHeaders);
     });
     headers["destination"] = destination;
     this._subscriptions[id] = controller;
