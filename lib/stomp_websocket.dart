@@ -53,7 +53,7 @@ class StompWebSocket {
 
   void _transmit(
       {String command,
-      Map<dynamic, dynamic> headers,
+      Map<String, String> headers,
       String body,
       Uint8List binaryBody}) {
     ///binaryBody = binaryBody == null ? Uint8List.fromList() : body;
@@ -129,9 +129,9 @@ class StompWebSocket {
     this._transmit(command: 'SEND', headers: headers, body: body);
   }
 
-  Stream<Frame> subscribe(String destination, [Map<dynamic, dynamic> headers]) {
+  Stream<Frame> subscribe(String destination, [Map<String, String> headers]) {
     if (headers == null) {
-      headers = {};
+      headers = Map<String, String>();
     }
     // for convenience if the `id` header is not set, we create a new one for this client
     //that will be returned to be able to unsubscribe this subscription
