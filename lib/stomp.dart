@@ -2,6 +2,7 @@ library stompdart;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:stompdart/config.dart';
@@ -19,25 +20,50 @@ class StompWebSocket {
 
   int _counter = 0;
   bool _connected = false;
+  Timer _pinger, _ponger;
+  DateTime _serverActivity = new DateTime.now();
 
   Completer<Frame> completer;
 
-  StreamController<Frame> _receiptController = new StreamController();
-  StreamController<Frame> _errorController = new StreamController();
+  StreamController<Frame> _receiptController;
+  StreamController<Frame> _errorController;
   //Server side ERROR frames
   Stream<Frame> get onError => _errorController.stream;
+  Config _config;
 
-  StompWebSocket() {
+  /**
+   * Heartbeat properties of the client
+   * send heartbeat every 10s by default (value is in ms)
+   * expect to receive server heartbeat at least every 10s by default (value in ms)
+   **/
+  int heartbeatOutgoing = 10000;
+  int heartbeatIncoming = 10000;
+
+  StompWebSocket(Config config) {
+    this._config = config;
     this._parser = Parser();
+    _receiptController = new StreamController();
+    _errorController = new StreamController();
   }
 
-  Future<Frame> connect(Config config) {
+  Future<Frame> connect() {
     completer = new Completer();
     try {
-      channel = IOWebSocketChannel.connect(config.url);
+      //TODO  add headers and protocols
+
+      channel = IOWebSocketChannel.connect(
+        Uri(
+          scheme: "ws",
+          host: _config.host,
+          port: _config.port,
+          path: _config.path,
+        ),
+      );
+
+      //channel = IOWebSocketChannel.connect(_config.url);
       channel.stream.listen(_onData,
           onError: _onError, onDone: _onDone, cancelOnError: null);
-      _connectToStomp(config);
+      _connectToStomp(_config);
     } on WebSocketChannelException catch (err) {
       _onError(err);
     } catch (err) {
@@ -56,7 +82,6 @@ class StompWebSocket {
       Map<String, String> headers,
       String body,
       Uint8List binaryBody}) {
-    ///binaryBody = binaryBody == null ? Uint8List.fromList() : body;
     final frame = Frame(
         command: command, headers: headers, body: body, binaryBody: binaryBody);
 
@@ -85,7 +110,7 @@ class StompWebSocket {
     switch (frame.command) {
       case 'CONNECTED':
         this._connected = true;
-        //_set up hearbeats
+        this._setupHeartbeat(frame.headers);
         completer.complete(frame);
         break;
       case 'MESSAGE':
@@ -149,5 +174,69 @@ class StompWebSocket {
     this._subscriptions[id] = controller;
     this._transmit(command: 'SUBSCRIBE', headers: headers);
     return controller.stream;
+  }
+
+  //Heart-beat negotiation
+  void _setupHeartbeat(headers) {
+    if (!['1.0', '1.1', '1.2'].contains(headers["version"]) ||
+        headers["heart-beat"] == null) {
+      return;
+    }
+
+    /**
+     * heart-beat header received from the server looks like:
+     * heart-beat: sx, sy
+     **/
+    List<String> heartbeatInfo = headers["heart-beat"].split(",");
+    int serverOutgoing = int.parse(heartbeatInfo[0]),
+        serverIncoming = int.parse(heartbeatInfo[1]);
+
+    if (this.heartbeatOutgoing != 0 && serverIncoming != 0) {
+      int ttl = math.max(this.heartbeatOutgoing, serverIncoming);
+
+      this._pinger =
+          new Timer.periodic(new Duration(milliseconds: ttl), (Timer timer) {
+        channel.sink.add("\n");
+      });
+    }
+
+    if (this.heartbeatIncoming != 0 && serverOutgoing != null) {
+      int ttl = math.max(this.heartbeatIncoming, serverOutgoing);
+      this._ponger =
+          new Timer.periodic(new Duration(milliseconds: ttl), (Timer timer) {
+        Duration delta = this._serverActivity.difference(new DateTime.now());
+        // We wait twice the TTL to be flexible on window's setInterval calls
+        if (delta.inMilliseconds > ttl * 2) {
+          this.channel.sink.close();
+        }
+      });
+    }
+  }
+
+  void ack(String messageID, String subscription, Map<String, String> headers) {
+    headers["message-id"] = messageID;
+    headers["subscription"] = subscription;
+    this._transmit(command: 'ACK', headers: headers);
+  }
+
+  void nack(
+      String messageID, String subscription, Map<String, String> headers) {
+    headers["message-id"] = messageID;
+    headers["subscription"] = subscription;
+    this._transmit(command: 'NACK', headers: headers);
+  }
+
+  void commit(String transaction) {
+    this._transmit(command: 'COMMIT', headers: {transaction: transaction});
+  }
+
+  String begin([String transaction]) {
+    String txid = transaction == null ? "tx-${this._counter++}" : transaction;
+    this._transmit(command: 'BEGIN', headers: {transaction: txid});
+    return txid;
+  }
+
+  void abort(String transaction) {
+    this._transmit(command: 'ABORT', headers: {transaction: transaction});
   }
 }

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:stompdart/stomp_websocket.dart';
+import 'package:stompdart/stomp.dart';
 
 class Parser {
   String _resultCommand;
