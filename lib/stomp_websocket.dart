@@ -53,7 +53,7 @@ class StompWebSocket {
 
   void _transmit(
       {String command,
-      Map<String, String> headers,
+      Map<dynamic, dynamic> headers,
       String body,
       Uint8List binaryBody}) {
     ///binaryBody = binaryBody == null ? Uint8List.fromList() : body;
@@ -141,10 +141,9 @@ class StompWebSocket {
     }
 
     String id = headers["id"];
-    Map<String, String> subHeaders = {'id': id};
     StreamController<Frame> controller = new StreamController(onCancel: () {
       this._subscriptions.remove(id);
-      this._transmit(command: 'UNSUBSCRIBE', headers: subHeaders);
+      this._transmit(command: 'UNSUBSCRIBE', headers: {id: id});
     });
     headers["destination"] = destination;
     this._subscriptions[id] = controller;
