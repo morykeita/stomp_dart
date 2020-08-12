@@ -13,7 +13,7 @@ part 'frame.dart';
 
 class StompWebSocket {
   // subscription callbacks indexed by subscriber's ID
-  Map<dynamic, StreamController<dynamic>> _subscriptions = {};
+  Map<String, StreamController<Frame>> _subscriptions = {};
   WebSocketChannel channel;
   Parser _parser;
 
@@ -129,7 +129,7 @@ class StompWebSocket {
     this._transmit(command: 'SEND', headers: headers, body: body);
   }
 
-  Stream<Frame> subscribe(String destination, [Map headers]) {
+  Stream<Frame> subscribe(String destination, [Map<dynamic, dynamic> headers]) {
     if (headers == null) {
       headers = {};
     }
