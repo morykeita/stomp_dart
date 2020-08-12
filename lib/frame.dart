@@ -9,7 +9,7 @@ const String STOMP_EOF = '\x00';
  */
 class Frame {
   final String command;
-  final Map headers;
+  final Map<String, String> headers;
   final String body;
   final Uint8List binaryBody;
 

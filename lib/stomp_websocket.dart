@@ -119,7 +119,7 @@ class StompWebSocket {
   }
 
   void send(String destination,
-      {Map headers, String body, String transactionId}) {
+      {Map<String, String> headers, String body, String transactionId}) {
     headers = headers == null ? {} : headers;
     headers["destination"] = destination;
 
