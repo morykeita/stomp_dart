@@ -161,7 +161,7 @@ class Parser {
     }
     List<String> headerLines = data.substring(0, divider).split("\n");
     String command = headerLines.removeAt(0);
-    Map headers = {};
+    Map<String, String> headers = {};
 
     /**
      * Parse headers in reverse order so that for repeated headers, the 1st
