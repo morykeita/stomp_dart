@@ -13,7 +13,7 @@ part 'frame.dart';
 
 class StompWebSocket {
   // subscription callbacks indexed by subscriber's ID
-  Map<String, StreamController<Frame>> _subscriptions = {};
+  Map<dynamic, StreamController<dynamic>> _subscriptions = {};
   WebSocketChannel channel;
   Parser _parser;
 
