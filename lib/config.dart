@@ -10,9 +10,8 @@ class Config {
   /// Headers to be passed when connecting to WebSocket
   final Map<String, dynamic> webSocketConnectHeaders;
 
-  Config(@required this.port, this.path,
-      {@required this.host,
-      this.stompConnectHeaders,
+  Config(@required this.host, @required this.port, this.path,
+      {this.stompConnectHeaders,
       this.pingInterval,
       this.webSocketConnectHeaders});
 }
