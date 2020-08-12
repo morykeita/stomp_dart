@@ -141,7 +141,7 @@ class StompWebSocket {
     }
 
     String id = headers["id"];
-    StreamController controller = new StreamController(onCancel: () {
+    StreamController<Frame> controller = new StreamController(onCancel: () {
       this._subscriptions.remove(id);
       this._transmit(command: 'UNSUBSCRIBE', headers: {id: id});
     });
