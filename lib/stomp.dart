@@ -58,6 +58,7 @@ class StompWebSocket {
           port: _config.port,
           path: _config.path,
         ),
+        headers: _config.headers,
       );
 
       //channel = IOWebSocketChannel.connect(_config.url);
@@ -72,7 +73,7 @@ class StompWebSocket {
   }
 
   void _connectToStomp(Config config) {
-    var connectHeaders = config.stompConnectHeaders ?? {};
+    var connectHeaders = config.headers ?? {};
     connectHeaders['accept-version'] = ['1.0', '1.1', '1.2'].join(',');
     _transmit(command: 'CONNECT', headers: connectHeaders);
   }
