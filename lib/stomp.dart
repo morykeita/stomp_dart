@@ -81,7 +81,7 @@ class StompWebSocket {
   void _transmit(
       {String command,
       Map<String, String> headers,
-      String body,
+      dynamic body,
       Uint8List binaryBody}) {
     final frame = Frame(
         command: command, headers: headers, body: body, binaryBody: binaryBody);
