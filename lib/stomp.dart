@@ -81,7 +81,7 @@ class StompWebSocket {
   void _transmit(
       {String command,
       Map<String, String> headers,
-      dynamic body,
+      String body,
       Uint8List binaryBody}) {
     final frame = Frame(
         command: command, headers: headers, body: body, binaryBody: binaryBody);
@@ -145,7 +145,7 @@ class StompWebSocket {
   }
 
   void send(String destination,
-      {Map<String, String> headers, dynamic body, String transactionId}) {
+      {Map<String, String> headers, String body, String transactionId}) {
     headers = headers == null ? {} : headers;
     headers["destination"] = destination;
 
